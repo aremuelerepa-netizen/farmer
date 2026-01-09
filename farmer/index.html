@@ -3,267 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AgroGuru Pro</title>
+    <title>AgroGuru AI</title>
     <style>
         :root { 
             --ag-green: #2e7d32; 
-            --ag-light: #f8faf8;
-            --ag-border: #e0e6e0;
+            --ag-bg: #ffffff;
+            --msg-bot: #f1f3f4;
+            --msg-user: #2e7d32;
         }
 
-        /* 1. LOCK VIEWPORT: Prevents the "moving up and down" jitter */
+        /* Prevent the phone from bouncing and moving up/down */
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
             overflow: hidden;
-            position: fixed; /* Hard lock for mobile browsers */
-            background-color: var(--ag-light);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            overscroll-behavior-y: none; /* Disables pull-to-refresh */
+            position: fixed;
+            background: var(--ag-bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overscroll-behavior-y: none;
         }
 
-        /* 2. MAIN CONTAINER: Full screen flexbox */
-        .app-container {
+        .app-shell {
             display: flex;
             flex-direction: column;
             height: 100vh;
-            width: 100vw;
-            max-width: 500px; /* Centers layout on larger screens */
+            width: 100%;
+            max-width: 500px;
             margin: 0 auto;
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
         }
 
         /* Header */
         header {
-            height: 60px;
-            padding: 0 20px;
+            padding: 15px 20px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid var(--ag-border);
-            flex-shrink: 0;
-        }
-        .logo { color: var(--ag-green); font-weight: 800; font-size: 1.2rem; }
-
-        /* Scanner Section (Compact) */
-        .scanner-bar {
-            background: #f1f8f1;
-            padding: 10px 20px;
-            display: flex;
             align-items: center;
-            gap: 15px;
-            border-bottom: 1px solid var(--ag-border);
-        }
-        .mini-preview {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
+            border-bottom: 1px solid #eee;
             background: #fff;
-            border: 2px solid var(--ag-green);
-            overflow: hidden;
-            position: relative;
+            z-index: 10;
         }
-        #img-prev { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .scan-btn {
-            background: var(--ag-green);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
+        .status-dot { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .logo { font-weight: 700; color: var(--ag-green); font-size: 1.1rem; }
 
-        /* 3. CHAT BOX: Takes up all available space */
-        .chat-area {
+        /* The Chat Container - Fills the Screen */
+        #chat-flow {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 20px;
+            padding: 20px 15px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
+            gap: 15px;
+            -webkit-overflow-scrolling: touch;
         }
-        .msg {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-        .msg.bot { background: #f0f0f0; align-self: flex-start; border-bottom-left-radius: 2px; color: #333; }
-        .msg.user { background: var(--ag-green); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
 
-        /* 4. INPUT BAR: Fixed at bottom */
-        .input-wrapper {
-            padding: 15px;
-            padding-bottom: calc(15px + env(safe-area-inset-bottom)); /* Android/iOS gesture bar space */
-            border-top: 1px solid var(--ag-border);
+        .bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            position: relative;
+        }
+        .bubble.bot {
+            background: var(--msg-bot);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            color: #202124;
+        }
+        .bubble.user {
+            background: var(--msg-user);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 2px 5px rgba(46, 125, 50, 0.2);
+        }
+
+        /* Image Scan Preview */
+        .img-card {
+            width: 100%;
+            max-width: 200px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 5px;
+            border: 2px solid var(--ag-green);
+        }
+
+        /* Input Area - Clean and Professional */
+        .input-area {
+            padding: 10px 15px;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            background: #fff;
             display: flex;
             align-items: center;
             gap: 10px;
-            background: white;
+            border-top: 1px solid #eee;
         }
-        .text-input {
+
+        .input-pill {
             flex-grow: 1;
-            border: 1px solid #ccd0cc;
+            background: #f1f3f4;
             border-radius: 25px;
-            padding: 12px 18px;
+            padding: 5px 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        input {
+            flex-grow: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 0;
             font-size: 16px;
             outline: none;
-            transition: border 0.2s;
         }
-        .text-input:focus { border-color: var(--ag-green); }
-        .icon-btn {
-            width: 45px;
-            height: 45px;
+
+        .action-btn {
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             border: none;
-            background: #eee;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            transition: 0.2s;
         }
-        .send-btn { background: var(--ag-green); color: white; }
+        .btn-camera { color: var(--ag-green); background: #e8f5e9; }
+        .btn-send { background: var(--ag-green); color: white; }
+        .btn-send:disabled { background: #ccc; }
 
-        /* 5. SWIPEABLE HISTORY */
-        .history-panel {
+        /* Swipe History Panel */
+        #history-panel {
             position: fixed;
-            top: 0;
-            right: -100%;
-            width: 100%;
-            height: 100%;
+            top: 0; right: -100%;
+            width: 100%; height: 100%;
             background: white;
-            z-index: 1000;
-            transition: transform 0.3s ease-out;
-            display: flex;
-            flex-direction: column;
+            z-index: 100;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .history-panel.open { transform: translateX(-100%); }
-        .hist-header { padding: 20px; border-bottom: 1px solid var(--ag-border); display: flex; justify-content: space-between; }
-        .hist-list { flex-grow: 1; overflow-y: auto; padding: 10px; }
-        .hist-card { padding: 15px; border-bottom: 1px solid #eee; }
+        #history-panel.active { right: 0; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
+<div class="app-shell">
     <header>
-        <span class="logo">AgroGuru Pro</span>
-        <button onclick="toggleHist()" style="border:none; background:none; font-size:1.5rem;">📜</button>
+        <div><span class="status-dot"></span><span class="logo">AgroGuru Pro</span></div>
+        <button onclick="openHist()" style="background:none; border:none; font-size:1.2rem;">📜</button>
     </header>
 
-    <div class="scanner-bar">
-        <div class="mini-preview"><img id="img-prev"></div>
-        <div style="flex-grow: 1;">
-            <div style="font-size: 0.8rem; font-weight: bold; color: #666;">DISEASE SCANNER</div>
-            <button class="scan-btn" onclick="document.getElementById('f').click()">TAP TO SCAN</button>
+    <div id="chat-flow">
+        <div class="bubble bot">Welcome back. I am AgroGuru. How is your farm today?</div>
+    </div>
+
+    <div class="input-area">
+        <button class="action-btn btn-camera" onclick="document.getElementById('file-in').click()">📷</button>
+        <div class="input-pill">
+            <input type="text" id="user-in" placeholder="Ask anything...">
         </div>
-        <input type="file" id="f" accept="image/*" capture="environment" hidden>
+        <button class="action-btn btn-send" id="send-btn">➔</button>
     </div>
-
-    <div class="chat-area" id="chatBox">
-        <div class="msg bot">Hello! I am your professional Agronomist. Upload a leaf photo or ask me a farming question.</div>
-    </div>
-
-    <div class="input-wrapper">
-        <button class="icon-btn" id="micBtn">🎤</button>
-        <input type="text" class="text-input" id="userInput" placeholder="Type a message...">
-        <button class="icon-btn send-btn" id="sendBtn">➔</button>
-    </div>
+    
+    <input type="file" id="file-in" accept="image/*" capture="environment" style="display:none">
 </div>
 
-<div class="history-panel" id="histPanel">
-    <div class="hist-header">
-        <span style="font-weight: bold;">Scan History</span>
-        <button onclick="toggleHist()" style="border:none; background:none; font-size:1.2rem;">✕</button>
+<div id="history-panel">
+    <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0">Recent Reports</h3>
+        <button onclick="closeHist()" style="border:none; background:none; font-size:1.5rem;">✕</button>
     </div>
-    <div class="hist-list" id="histList"></div>
-    <div style="padding: 15px; text-align: center; color: #999; font-size: 0.8rem;">Swipe right to close →</div>
+    <div id="hist-content" style="padding:15px; overflow-y:auto; height:calc(100% - 80px);"></div>
+    <div style="text-align:center; padding:10px; color:#999; font-size:0.8rem;">Swipe right to close</div>
 </div>
 
 <script>
-    const chatBox = document.getElementById('chatBox'), 
-          userInput = document.getElementById('userInput'),
-          histPanel = document.getElementById('histPanel'),
-          histList = document.getElementById('histList'),
-          f = document.getElementById('f'),
-          prev = document.getElementById('img-prev');
+    const chatFlow = document.getElementById('chat-flow');
+    const userIn = document.getElementById('user-in');
+    const sendBtn = document.getElementById('send-btn');
+    const fileIn = document.getElementById('file-in');
+    const histPanel = document.getElementById('history-panel');
 
-    // Add message to UI
-    function addMsg(role, text) {
+    function addBubble(role, text, isImage = false) {
         const div = document.createElement('div');
-        div.className = `msg ${role}`;
-        div.innerText = text;
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        div.className = `bubble ${role}`;
+        if(isImage) {
+            div.innerHTML = `<img src="${text}" class="img-card"><br><i>Scanning...</i>`;
+        } else {
+            div.innerText = text;
+        }
+        chatFlow.appendChild(div);
+        chatFlow.scrollTop = chatFlow.scrollHeight;
     }
 
-    // Handle Send
-    async function sendMessage() {
-        const text = userInput.value.trim();
-        if(!text) return;
-        addMsg('user', text);
-        userInput.value = '';
+    async function handleChat() {
+        const msg = userIn.value.trim();
+        if(!msg) return;
+        addBubble('user', msg);
+        userIn.value = '';
 
         try {
             const res = await fetch('/chat', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: text})
+                body: JSON.stringify({message: msg})
             });
             const data = await res.json();
-            addMsg('bot', data.reply || data.error);
-        } catch { addMsg('bot', "Connection Error."); }
+            addBubble('bot', data.reply || "Thinking error...");
+        } catch { addBubble('bot', "Connection failed."); }
     }
 
-    document.getElementById('sendBtn').onclick = sendMessage;
-    userInput.onkeypress = (e) => { if(e.key === "Enter") sendMessage(); };
+    sendBtn.onclick = handleChat;
+    userIn.onkeypress = (e) => { if(e.key === 'Enter') handleChat(); };
 
-    // Image Upload & Analysis
-    f.onchange = async (e) => {
+    fileIn.onchange = async (e) => {
         const file = e.target.files[0];
         if(!file) return;
-        prev.src = URL.createObjectURL(file);
-        prev.style.display = 'block';
-        addMsg('user', "Analyzing photo...");
+        
+        const url = URL.createObjectURL(file);
+        addBubble('user', url, true);
 
         const fd = new FormData();
         fd.append('file', file);
         try {
-            const r = await fetch('/diagnose', { method: 'POST', body: fd });
-            const d = await r.json();
-            const result = d.analysis || d.error;
-            addMsg('bot', result);
-            saveToHistory(result);
-        } catch { addMsg('bot', "Vision Error."); }
+            const res = await fetch('/diagnose', { method: 'POST', body: fd });
+            const data = await res.json();
+            addBubble('bot', data.analysis || "Vision error.");
+            saveHist(data.analysis);
+        } catch { addBubble('bot', "Server error."); }
     };
 
-    // --- SWIPE LOGIC ---
+    // History Logic
+    function openHist() { 
+        histPanel.classList.add('active'); 
+        const h = JSON.parse(localStorage.getItem('agH') || '[]');
+        document.getElementById('hist-content').innerHTML = h.map(i => `
+            <div style="padding:12px; border-bottom:1px solid #f5f5f5;">
+                <small style="color:#888">${i.d}</small><br><strong>${i.t}</strong>
+            </div>
+        `).join('') || "No scans yet.";
+    }
+    function closeHist() { histPanel.classList.remove('active'); }
+    function saveHist(t) {
+        let h = JSON.parse(localStorage.getItem('agH') || '[]');
+        h.unshift({ d: new Date().toLocaleTimeString(), t: t.substring(0, 60) + '...' });
+        localStorage.setItem('agH', JSON.stringify(h.slice(0, 10)));
+    }
+
+    // Swipe to close history
     let startX = 0;
-    histPanel.addEventListener('touchstart', e => startX = e.touches[0].clientX);
-    histPanel.addEventListener('touchend', e => {
-        if (e.changedTouches[0].clientX - startX > 80) toggleHist(); 
-    });
+    histPanel.ontouchstart = e => startX = e.touches[0].clientX;
+    histPanel.ontouchend = e => { if(e.changedTouches[0].clientX - startX > 100) closeHist(); };
 
-    function toggleHist() {
-        histPanel.classList.toggle('open');
-        if(histPanel.classList.contains('open')) {
-            const h = JSON.parse(localStorage.getItem('agHistory') || '[]');
-            histList.innerHTML = h.map(i => `<div class="hist-card"><small>${i.date}</small><br>${i.text}</div>`).join('') || "No history.";
-        }
-    }
-
-    function saveToHistory(text) {
-        let h = JSON.parse(localStorage.getItem('agHistory') || '[]');
-        h.unshift({ date: new Date().toLocaleTimeString(), text: text.substring(0, 50) + "..." });
-        localStorage.setItem('agHistory', JSON.stringify(h.slice(0,10)));
-    }
 </script>
 </body>
 </html>
