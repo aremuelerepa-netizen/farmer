@@ -3,169 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgroGuru Pro - AI Agent</title>
+    <title>AgroGuru AI</title>
     <style>
-        :root {
-            --ag-green: #2e7d32;
-            --ag-light-bg: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);
-            --ag-white: #ffffff;
-            --ag-text: #2c3e50;
-            --ag-border: #d1d9d1;
-            --ag-gray: #f8f9fa;
-        }
-
-        body {
-            margin: 0; font-family: 'Inter', sans-serif;
-            background: #f0f4f0; display: flex; justify-content: center; height: 100vh;
-        }
-
-        .app-container {
-            width: 100%; max-width: 480px; background: var(--ag-white);
-            display: flex; flex-direction: column; position: relative;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden;
-        }
-
-        header {
-            padding: 15px 20px; background: white; border-bottom: 1px solid var(--ag-border);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-
-        .logo { color: var(--ag-green); font-weight: 800; font-size: 18px; }
-
-        /* Scanning Area */
-        .scan-section {
-            padding: 25px 20px; background: var(--ag-light-bg);
-            display: flex; flex-direction: column; align-items: center;
-            border-bottom: 1px solid var(--ag-border);
-        }
-
-        .leaf-circle {
-            width: 180px; height: 180px; border-radius: 50%;
-            border: 4px solid white; background: white;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden; position: relative; box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-
-        #preview-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        :root { --ag-green: #2e7d32; --ag-light: #e8f5e9; --ag-border: #d1d9d1; }
+        body { margin: 0; font-family: sans-serif; background: #f0f4f0; display: flex; justify-content: center; height: 100vh; }
+        .app-container { width: 100%; max-width: 480px; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         
-        .scan-line {
-            position: absolute; width: 100%; height: 3px; background: var(--ag-green);
-            top: 0; display: none; z-index: 5; box-shadow: 0 0 10px var(--ag-green);
-        }
+        header { padding: 15px; border-bottom: 1px solid var(--ag-border); display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: var(--ag-green); font-weight: bold; font-size: 20px; }
 
-        /* Chat */
-        .chat-body {
-            flex-grow: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-direction: column; gap: 12px;
-        }
+        .scan-area { padding: 20px; background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid var(--ag-border); }
+        .circle { width: 160px; height: 160px; border-radius: 50%; border: 4px solid white; overflow: hidden; position: relative; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #preview { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .line { position: absolute; width: 100%; height: 3px; background: var(--ag-green); top: 0; display: none; }
+        @keyframes scan { from { top: 0; } to { top: 100%; } }
 
-        .msg { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
-        .msg.agent { background: #f1f8f1; align-self: flex-start; border-left: 4px solid var(--ag-green); }
+        .chat { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
+        .msg.bot { background: #f1f8f1; align-self: flex-start; border-left: 4px solid var(--ag-green); }
         .msg.user { background: #e9ecef; align-self: flex-end; }
-        .msg.system { font-size: 11px; color: #888; align-self: center; background: none; }
 
-        /* Controls */
-        .input-bar {
-            padding: 15px; border-top: 1px solid var(--ag-border);
-            background: white; display: flex; align-items: center; gap: 10px;
-        }
-
-        .text-box {
-            flex-grow: 1; background: var(--ag-gray); border-radius: 25px;
-            display: flex; align-items: center; padding: 0 15px; border: 1px solid #dee2e6;
-        }
-
-        input[type="text"] { border: none; background: transparent; padding: 10px 0; width: 100%; outline: none; }
-
-        .btn-main { background: var(--ag-green); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .round-btn { background: var(--ag-green); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-        /* History */
-        .history-panel {
-            position: absolute; right: -100%; top: 0; width: 85%; height: 100%;
-            background: white; z-index: 10; transition: 0.3s; padding: 20px;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.1); box-sizing: border-box;
-        }
-        .history-panel.active { right: 0; }
-
-        @keyframes scanning { from { top: 0; } to { top: 100%; } }
+        .input-bar { padding: 15px; border-top: 1px solid var(--ag-border); display: flex; gap: 10px; align-items: center; }
+        input { flex-grow: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
+        .btn-send { background: var(--ag-green); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <header>
-        <div class="logo">AgroGuru AI</div>
-        <button onclick="toggleHistory()" style="background:none; border:none; cursor:pointer; color:var(--ag-green); font-weight:bold;">📜 History</button>
-    </header>
+    <header><div class="logo">AgroGuru AI</div></header>
 
-    <div class="scan-section">
-        <div class="leaf-circle">
-            <div class="scan-line" id="scan-line"></div>
-            <img id="preview-img" src="">
-            <span id="placeholder">Ready to Scan</span>
+    <div class="scan-area">
+        <div class="circle">
+            <div class="line" id="line"></div>
+            <img id="preview">
         </div>
-        <button class="btn-main" style="margin-top:15px" onclick="document.getElementById('file-up').click()">Snap Photo</button>
-        <input type="file" id="file-up" accept="image/*" capture="environment" hidden>
+        <button onclick="document.getElementById('file').click()" style="margin-top:10px; background:var(--ag-green); color:white; border:none; padding:8px 15px; border-radius:5px;">Snap Photo</button>
+        <input type="file" id="file" accept="image/*" capture="environment" hidden>
     </div>
 
-    <div class="chat-body" id="chat">
-        <div class="msg agent">I'm your AI Agronomist. Snap a leaf or ask me a question!</div>
+    <div class="chat" id="chat-box">
+        <div class="msg bot">Welcome! Send a photo of a leaf or ask a question.</div>
     </div>
 
     <div class="input-bar">
-        <button id="mic-btn" style="background:none; border:none; font-size:22px; cursor:pointer;">🎤</button>
-        <div class="text-box">
-            <input type="text" id="user-msg" placeholder="Ask AgroGuru...">
-        </div>
-        <button class="round-btn" id="send-btn">➔</button>
-    </div>
-
-    <div id="history-panel" class="history-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px">
-            <h3>Recent Scans</h3>
-            <button onclick="toggleHistory()" style="background:none; border:none; font-size:20px">✕</button>
-        </div>
-        <div id="history-list" style="margin-top:15px"></div>
+        <input type="text" id="user-input" placeholder="Ask about your crops...">
+        <button class="btn-send" id="send-btn">➔</button>
     </div>
 </div>
 
 <script>
-    const fileUp = document.getElementById('file-up');
-    const previewImg = document.getElementById('preview-img');
-    const scanLine = document.getElementById('scan-line');
-    const chat = document.getElementById('chat');
-    const userMsg = document.getElementById('user-msg');
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
-    const micBtn = document.getElementById('mic-btn');
+    const fileInput = document.getElementById('file');
+    const preview = document.getElementById('preview');
+    const line = document.getElementById('line');
 
-    // --- VOICE RECOGNITION ---
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        micBtn.onclick = () => {
-            recognition.start();
-            addMsg('system', "Listening...");
-            micBtn.style.color = "red";
-        };
-        recognition.onresult = (e) => {
-            userMsg.value = e.results[0][0].transcript;
-            micBtn.style.color = "var(--ag-green)";
-        };
-        recognition.onend = () => micBtn.style.color = "black";
+    function addMsg(role, text) {
+        const div = document.createElement('div');
+        div.className = `msg ${role}`;
+        div.innerHTML = text.replace(/\n/g, '<br>');
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // --- IMAGE SCANNING ---
-    fileUp.onchange = async (e) => {
+    // --- HANDLE TEXT MESSAGES ---
+    sendBtn.onclick = async () => {
+        const text = userInput.value.trim();
+        if(!text) return;
+        addMsg('user', text);
+        userInput.value = "";
+
+        try {
+            const res = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+            const data = await res.json();
+            addMsg('bot', data.reply || "Error thinking...");
+        } catch { addMsg('bot', "Server offline."); }
+    };
+
+    // --- HANDLE PHOTOS ---
+    fileInput.onchange = async (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-        previewImg.src = URL.createObjectURL(file);
-        previewImg.style.display = "block";
-        document.getElementById('placeholder').style.display = "none";
-        
-        scanLine.style.display = "block";
-        scanLine.style.animation = "scanning 2s infinite linear";
-        addMsg('user', "Analyzing leaf health...");
+        if(!file) return;
+
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+        line.style.display = "block";
+        line.style.animation = "scan 2s infinite linear";
+        addMsg('user', "Analyzing image...");
 
         const formData = new FormData();
         formData.append('file', file);
@@ -173,47 +103,13 @@
         try {
             const res = await fetch('/diagnose', { method: 'POST', body: formData });
             const data = await res.json();
-            scanLine.style.display = "none";
-            if(data.analysis) {
-                addMsg('agent', data.analysis.replace(/\n/g, '<br>'));
-                saveToHistory(data.analysis);
-            }
-        } catch (err) {
-            scanLine.style.display = "none";
-            addMsg('agent', "Error: System Offline.");
+            line.style.display = "none";
+            addMsg('bot', data.analysis || "Could not diagnose.");
+        } catch { 
+            line.style.display = "none";
+            addMsg('bot', "Upload failed."); 
         }
     };
-
-    // --- UI HELPERS ---
-    function addMsg(sender, text) {
-        const div = document.createElement('div');
-        div.className = `msg ${sender}`;
-        div.innerHTML = text;
-        chat.appendChild(div);
-        chat.scrollTop = chat.scrollHeight;
-    }
-
-    sendBtn.onclick = () => {
-        if(!userMsg.value.trim()) return;
-        addMsg('user', userMsg.value);
-        userMsg.value = "";
-    };
-
-    function toggleHistory() {
-        const p = document.getElementById('history-panel');
-        p.classList.toggle('active');
-        if(p.classList.contains('active')) {
-            const list = document.getElementById('history-list');
-            const h = JSON.parse(localStorage.getItem('agroHistory') || '[]');
-            list.innerHTML = h.map(i => `<div style="padding:10px; border-bottom:1px solid #eee; font-size:12px;"><strong>${i.date}</strong><br>${i.result}</div>`).join('') || "No history.";
-        }
-    }
-
-    function saveToHistory(text) {
-        let h = JSON.parse(localStorage.getItem('agroHistory') || '[]');
-        h.unshift({ date: new Date().toLocaleDateString(), result: text.substring(0, 50) + "..." });
-        localStorage.setItem('agroHistory', JSON.stringify(h.slice(0, 10)));
-    }
 </script>
 </body>
 </html>
