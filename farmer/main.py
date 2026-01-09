@@ -70,8 +70,8 @@ async def chat_text(data: dict):
                         "- BREVITY: Max 80 words.\n"
                         "- GURU TIP: Always end with a unique farming secret.\n"
                     )
-                }, # FIXED: Added the missing comma here
-                {"role": "user", "content": user_text}
+                },
+                { "role": "user", "content": user_text }
             ]
         )
         return {"reply": completion.choices[0].message.content}
