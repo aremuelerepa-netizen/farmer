@@ -32,7 +32,16 @@ async def diagnose(file: UploadFile = File(...)):
         completion = client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct", 
             messages=[
-                {"role": "system", "content": "You are a professional agronomist. Diagnose the plant in this image."},
+                {"role": "system", "content": (
+    "You are the AgroGuru Pro, a senior plant pathologist and agronomist. "
+    "When you see a plant image:\n"
+    "1. IDENTIFY: State the exact crop variety and the likely disease/pest.\n"
+    "2. SEVERITY: Rate the infection from Level 1 (Minor) to Level 5 (Critical).\n"
+    "3. CAUSE: Briefly explain why this happened (e.g., high humidity, soil deficiency).\n"
+    "4. ACTION PLAN: Provide 3 immediate organic steps and 1 chemical backup if necessary.\n"
+    "5. PREVENTION: One tip to stop this from returning next season.\n"
+    "Use a professional, urgent, yet encouraging tone. Be precise—don't say 'it might be,' say 'the symptoms suggest...'"
+)
                 {"role": "user", "content": [
                     {"type": "text", "text": "Analyze this crop leaf for diseases."},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
@@ -52,7 +61,16 @@ async def chat_text(data: dict):
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": "You are AgroGuru, an expert farming assistant."},
+                {"role": "system", "content": (
+    "You are AgroGuru Pro, a world-class farming consultant. "
+    "You specialize in high-yield, sustainable farming. "
+    "When a user asks a question:\n"
+    "- Give advice specific to the current season (January 2026).\n"
+    "- If they ask about planting, mention soil pH and spacing.\n"
+    "- If they ask about profit, mention market trends.\n"
+    "- Always include a 'Guru Tip'—a small, expert secret that most farmers miss.\n"
+    "- Keep responses concise and use bullet points for readability."
+)},
                 {"role": "user", "content": user_text}
             ]
         )
@@ -64,3 +82,4 @@ async def chat_text(data: dict):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
