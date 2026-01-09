@@ -15,9 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Groq - Ensure the key is correct in Render Environment Variables
-GROQ_KEY = os.environ.get("GROQ_API_KEY")
-client = Groq(api_key=GROQ_KEY)
+# API Key from Render Environment
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 @app.get("/")
 async def serve_interface():
@@ -30,38 +29,38 @@ async def diagnose(file: UploadFile = File(...)):
         content = await file.read()
         base64_image = base64.b64encode(content).decode('utf-8')
         
-        # Using the specific Llama 3.2 Vision model
+        # Latest Vision Model
         completion = client.chat.completions.create(
             model="llama-3.2-11b-vision-preview",
             messages=[
-                {"role": "system", "content": "You are a professional agronomist. Identify the plant and disease."},
+                {"role": "system", "content": "You are a pro agronomist. Diagnose the plant and disease in 3 steps."},
                 {"role": "user", "content": [
-                    {"type": "text", "text": "Analyze this crop image."},
+                    {"type": "text", "text": "Analyze this crop."},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]}
             ]
         )
         return {"analysis": completion.choices[0].message.content}
     except Exception as e:
-        print(f"DIAGNOSE ERROR: {str(e)}") # This shows in Render Logs
-        return {"error": "Vision AI is currently unavailable."}
+        print(f"Vision Error: {e}")
+        return {"error": "Vision AI error."}
 
 @app.post("/chat")
 async def chat_text(data: dict):
     try:
         user_text = data.get("message")
-        # Using the most stable Llama 3 text model
+        # FIXED: Using the new Llama 3.3 model
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": "You are a helpful AI farming assistant named AgroGuru."},
+                {"role": "system", "content": "You are AgroGuru, a helpful farming assistant."},
                 {"role": "user", "content": user_text}
             ]
         )
         return {"reply": completion.choices[0].message.content}
     except Exception as e:
-        print(f"CHAT ERROR: {str(e)}") # This shows in Render Logs
-        return {"error": "The AI is having trouble connecting."}
+        print(f"Chat Error: {e}")
+        return {"error": "Chat AI error."}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
