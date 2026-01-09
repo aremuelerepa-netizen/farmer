@@ -6,80 +6,30 @@
     <title>AgroGuru Pro</title>
     <style>
         :root { --ag-green: #2e7d32; --ag-bg: #ffffff; }
-
-        /* Lock the background so nothing bounces */
-        html, body { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; position: fixed; background: var(--ag-bg); 
-            font-family: -apple-system, Roboto, sans-serif; 
-        }
-
-        /* App container that we will fix with JavaScript */
-        #app-viewport {
-            display: flex; flex-direction: column;
-            width: 100%; position: absolute; top: 0; left: 0;
-        }
-
-        header { 
-            height: 55px; padding: 0 15px; display: flex; 
-            justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0;
-            z-index: 100;
-        }
-        .logo { font-weight: 700; color: var(--ag-green); font-size: 1rem; }
-
-        #chat-flow { 
-            flex-grow: 1; overflow-y: auto; padding: 10px; 
-            display: flex; flex-direction: column; gap: 10px; 
-            -webkit-overflow-scrolling: touch; 
-        }
-
-        .bubble { 
-            max-width: 80%; padding: 10px 14px; border-radius: 18px; 
-            font-size: 14px; line-height: 1.4; word-wrap: break-word; 
-        }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; position: fixed; background: var(--ag-bg); font-family: -apple-system, Roboto, sans-serif; }
+        #app-viewport { display: flex; flex-direction: column; width: 100%; position: absolute; top: 0; left: 0; }
+        header { height: 55px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0; }
+        .logo { font-weight: 700; color: var(--ag-green); }
+        #chat-flow { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
+        .bubble { max-width: 80%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
         .bubble.bot { background: #f1f3f4; align-self: flex-start; border-bottom-left-radius: 4px; }
         .bubble.user { background: var(--ag-green); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-
-        /* Scanning Visual */
-        .img-wrap { position: relative; width: 150px; border-radius: 10px; overflow: hidden; margin-top: 5px; border: 2px solid #eee; }
-        .img-wrap img { width: 100%; display: block; }
-        .laser { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 3px; 
-            background: #00ff00; box-shadow: 0 0 10px #00ff00;
-            animation: scan 2s infinite linear; display: none;
-        }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
-
-        .input-area { 
-            height: 65px; padding: 0 12px;
-            background: #fff; display: flex; align-items: center; gap: 10px; 
-            border-top: 1px solid #eee; flex-shrink: 0;
-        }
+        .img-preview { width: 100%; max-width: 180px; border-radius: 10px; margin-top: 5px; display: block; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .input-area { height: 65px; padding: 0 12px; background: #fff; display: flex; align-items: center; gap: 10px; border-top: 1px solid #eee; flex-shrink: 0; }
         .input-pill { flex-grow: 1; background: #f1f3f4; border-radius: 25px; padding: 0 15px; display: flex; align-items: center; }
-        input { flex-grow: 1; border: none; background: transparent; height: 45px; font-size: 16px; outline: none; color: #333; }
-        
+        input { flex-grow: 1; border: none; background: transparent; height: 45px; font-size: 16px; outline: none; }
         .btn { width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-cam { color: var(--ag-green); background: #e8f5e9; }
         .btn-send { background: var(--ag-green); color: white; }
-
-        #hist-panel { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: white; z-index: 1000; transition: 0.3s; }
-        #hist-panel.active { right: 0; }
-        .h-item { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="app-viewport">
-    <header>
-        <span class="logo">AgroGuru Pro</span>
-        <button onclick="toggleH(true)" style="background:none; border:none; font-size:1.3rem;">📜</button>
-    </header>
-
+    <header><span class="logo">AgroGuru Pro</span></header>
     <div id="chat-flow">
-        <div class="bubble bot">Hello! I've locked the screen. I'm ready for your crop questions or photos.</div>
+        <div class="bubble bot">Ready to help. Snap a crop photo or type a message.</div>
     </div>
-
     <div class="input-area">
         <button class="btn btn-cam" onclick="document.getElementById('f').click()">📷</button>
         <div class="input-pill"><input type="text" id="i" placeholder="Ask AgroGuru..."></div>
@@ -88,30 +38,23 @@
     <input type="file" id="f" accept="image/*" capture="environment" style="display:none">
 </div>
 
-<div id="hist-panel">
-    <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-        <strong>History</strong>
-        <button onclick="toggleH(false)" style="border:none; background:none; font-size:1.5rem;">✕</button>
-    </div>
-    <div id="h-list"></div>
-</div>
-
 <script>
     const viewport = document.getElementById('app-viewport');
-    const chat = document.getElementById('chat-flow'), inp = document.getElementById('i'), file = document.getElementById('f'), hPanel = document.getElementById('hist-panel');
+    const chat = document.getElementById('chat-flow'), inp = document.getElementById('i'), fileIn = document.getElementById('f');
 
-    // FIX: Force the app to stay the exact height of the screen regardless of keyboard
-    function fixSize() {
-        viewport.style.height = window.innerHeight + 'px';
-    }
+    function fixSize() { viewport.style.height = window.innerHeight + 'px'; }
     window.addEventListener('resize', fixSize);
     window.addEventListener('load', fixSize);
     fixSize();
 
-    function addB(role, content, isHtml = false) {
+    function addB(role, content, isImg = false) {
         const d = document.createElement('div');
         d.className = `bubble ${role}`;
-        if(isHtml) d.innerHTML = content; else d.innerText = content;
+        if(isImg) {
+            d.innerHTML = `<img src="${content}" class="img-preview"><br><small>Analyzing tissue...</small>`;
+        } else {
+            d.innerText = content;
+        }
         chat.appendChild(d);
         chat.scrollTop = chat.scrollHeight;
     }
@@ -127,40 +70,26 @@
         } catch { addB('bot', "Connection error."); }
     }
 
-    file.onchange = async () => {
-        const f = file.files[0]; if(!f) return;
-        const url = URL.createObjectURL(f);
-        const html = `<div class="img-wrap"><div class="laser" id="ls" style="display:block"></div><img src="${url}"></div><br><small>Scanning...</small>`;
-        addB('user', html, true);
-        const fd = new FormData(); fd.append('file', f);
-        try {
-            const r = await fetch('/diagnose', {method:'POST', body:fd});
-            const d = await r.json();
-            document.getElementById('ls').style.display = 'none';
-            addB('bot', d.analysis);
-            saveH(d.analysis);
-        } catch { addB('bot', "Scanning failed."); }
+    fileIn.onchange = async () => {
+        const file = fileIn.files[0];
+        if(!file) return;
+
+        // Convert file to DataURL so it stays visible even if the laptop/phone connection jitters
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const dataUrl = e.target.result;
+            addB('user', dataUrl, true); // This shows the picture in chat
+
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                const r = await fetch('/diagnose', {method:'POST', body:fd});
+                const d = await r.json();
+                addB('bot', d.analysis);
+            } catch { addB('bot', "Could not reach the AI. Try a smaller photo."); }
+        };
+        reader.readAsDataURL(file);
     };
-
-    function saveH(t) {
-        let h = JSON.parse(localStorage.getItem('ag') || '[]');
-        h.unshift({d: new Date().toLocaleTimeString(), t: t});
-        localStorage.setItem('ag', JSON.stringify(h.slice(0,10)));
-    }
-
-    function toggleH(on) {
-        hPanel.classList.toggle('active', on);
-        if(on) {
-            const h = JSON.parse(localStorage.getItem('ag') || '[]');
-            document.getElementById('h-list').innerHTML = h.map((x,i) => `<div class="h-item" onclick="viewH(${i})">${x.d}: ${x.t.substring(0,40)}...</div>`).join('') || "<p style='padding:15px'>Empty.</p>";
-        }
-    }
-
-    function viewH(i) {
-        const h = JSON.parse(localStorage.getItem('ag') || '[]');
-        addB('bot', "Restored Report: " + h[i].t);
-        toggleH(false);
-    }
 
     inp.onkeypress = (e) => { if(e.key==='Enter') sendT(); };
 </script>
