@@ -2,131 +2,267 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>AgroGuru Pro</title>
     <style>
-        :root { --ag-green: #2e7d32; --ag-bg: #f0f4f0; }
-        body { margin: 0; font-family: sans-serif; background: var(--ag-bg); display: flex; justify-content: center; height: 100vh; overflow: hidden; }
-        .app { width: 100%; max-width: 480px; background: white; display: flex; flex-direction: column; position: relative; }
-        header { padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
-        .logo { color: var(--ag-green); font-weight: bold; font-size: 20px; }
-        
-        /* Scanner UI */
-        .scanner { padding: 20px; background: #e8f5e9; display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid #ddd; }
-        .viewfinder { width: 140px; height: 140px; border-radius: 50%; border: 4px solid white; overflow: hidden; position: relative; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        :root { 
+            --ag-green: #2e7d32; 
+            --ag-light: #f8faf8;
+            --ag-border: #e0e6e0;
+        }
+
+        /* 1. LOCK VIEWPORT: Prevents the "moving up and down" jitter */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed; /* Hard lock for mobile browsers */
+            background-color: var(--ag-light);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overscroll-behavior-y: none; /* Disables pull-to-refresh */
+        }
+
+        /* 2. MAIN CONTAINER: Full screen flexbox */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            max-width: 500px; /* Centers layout on larger screens */
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* Header */
+        header {
+            height: 60px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--ag-border);
+            flex-shrink: 0;
+        }
+        .logo { color: var(--ag-green); font-weight: 800; font-size: 1.2rem; }
+
+        /* Scanner Section (Compact) */
+        .scanner-bar {
+            background: #f1f8f1;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--ag-border);
+        }
+        .mini-preview {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: #fff;
+            border: 2px solid var(--ag-green);
+            overflow: hidden;
+            position: relative;
+        }
         #img-prev { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .laser { position: absolute; width: 100%; height: 3px; background: var(--ag-green); top: 0; display: none; animation: scan 2s infinite linear; }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
+        .scan-btn {
+            background: var(--ag-green);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
 
-        /* Chat UI */
-        .chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
-        .msg.bot { background: #f1f8f1; align-self: flex-start; border-left: 4px solid var(--ag-green); }
-        .msg.user { background: #e9ecef; align-self: flex-end; }
+        /* 3. CHAT BOX: Takes up all available space */
+        .chat-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
+        }
+        .msg {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .msg.bot { background: #f0f0f0; align-self: flex-start; border-bottom-left-radius: 2px; color: #333; }
+        .msg.user { background: var(--ag-green); color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
 
-        /* Input Bar */
-        .controls { padding: 15px; border-top: 1px solid #ddd; display: flex; gap: 10px; }
-        input { flex-grow: 1; padding: 12px; border-radius: 25px; border: 1px solid #ddd; outline: none; }
-        .btn { background: var(--ag-green); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; }
+        /* 4. INPUT BAR: Fixed at bottom */
+        .input-wrapper {
+            padding: 15px;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom)); /* Android/iOS gesture bar space */
+            border-top: 1px solid var(--ag-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+        }
+        .text-input {
+            flex-grow: 1;
+            border: 1px solid #ccd0cc;
+            border-radius: 25px;
+            padding: 12px 18px;
+            font-size: 16px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .text-input:focus { border-color: var(--ag-green); }
+        .icon-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .send-btn { background: var(--ag-green); color: white; }
 
-        /* History Panel */
-        .history { position: absolute; right: -100%; top: 0; width: 85%; height: 100%; background: white; z-index: 100; transition: 0.3s; padding: 20px; box-sizing: border-box; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
-        .history.open { right: 0; }
-        .hist-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; }
+        /* 5. SWIPEABLE HISTORY */
+        .history-panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            transition: transform 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+        .history-panel.open { transform: translateX(-100%); }
+        .hist-header { padding: 20px; border-bottom: 1px solid var(--ag-border); display: flex; justify-content: space-between; }
+        .hist-list { flex-grow: 1; overflow-y: auto; padding: 10px; }
+        .hist-card { padding: 15px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
-<div class="app">
+
+<div class="app-container">
     <header>
-        <div class="logo">AgroGuru AI</div>
-        <button onclick="toggleHist()" style="background:none; border:none; color:var(--ag-green); font-weight:bold; cursor:pointer;">📜 History</button>
+        <span class="logo">AgroGuru Pro</span>
+        <button onclick="toggleHist()" style="border:none; background:none; font-size:1.5rem;">📜</button>
     </header>
 
-    <div class="scanner">
-        <div class="viewfinder"><div class="laser" id="laser"></div><img id="img-prev"></div>
-        <button onclick="document.getElementById('f').click()" style="margin-top:10px; border-radius:20px; padding:8px 20px; border:none; background:var(--ag-green); color:white; cursor:pointer;">📷 Take Photo</button>
+    <div class="scanner-bar">
+        <div class="mini-preview"><img id="img-prev"></div>
+        <div style="flex-grow: 1;">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #666;">DISEASE SCANNER</div>
+            <button class="scan-btn" onclick="document.getElementById('f').click()">TAP TO SCAN</button>
+        </div>
         <input type="file" id="f" accept="image/*" capture="environment" hidden>
     </div>
 
-    <div class="chat-box" id="box">
-        <div class="msg bot">I'm ready. Snap a leaf or ask me anything!</div>
+    <div class="chat-area" id="chatBox">
+        <div class="msg bot">Hello! I am your professional Agronomist. Upload a leaf photo or ask me a farming question.</div>
     </div>
 
-    <div class="controls">
-        <button class="btn" id="mic" style="background:#f0f0f0; color:#333;">🎤</button>
-        <input type="text" id="in" placeholder="Ask AgroGuru...">
-        <button class="btn" id="send">➔</button>
-    </div>
-
-    <div class="history" id="hp">
-        <div style="display:flex; justify-content:space-between;"><h3>Recent Scans</h3><button onclick="toggleHist()" style="border:none; background:none; font-size:20px;">✕</button></div>
-        <div id="hl"></div>
+    <div class="input-wrapper">
+        <button class="icon-btn" id="micBtn">🎤</button>
+        <input type="text" class="text-input" id="userInput" placeholder="Type a message...">
+        <button class="icon-btn send-btn" id="sendBtn">➔</button>
     </div>
 </div>
 
+<div class="history-panel" id="histPanel">
+    <div class="hist-header">
+        <span style="font-weight: bold;">Scan History</span>
+        <button onclick="toggleHist()" style="border:none; background:none; font-size:1.2rem;">✕</button>
+    </div>
+    <div class="hist-list" id="histList"></div>
+    <div style="padding: 15px; text-align: center; color: #999; font-size: 0.8rem;">Swipe right to close →</div>
+</div>
+
 <script>
-    const box = document.getElementById('box'), inp = document.getElementById('in'), send = document.getElementById('send'), 
-          mic = document.getElementById('mic'), f = document.getElementById('f'), prev = document.getElementById('img-prev'), 
-          laser = document.getElementById('laser'), hp = document.getElementById('hp'), hl = document.getElementById('hl');
+    const chatBox = document.getElementById('chatBox'), 
+          userInput = document.getElementById('userInput'),
+          histPanel = document.getElementById('histPanel'),
+          histList = document.getElementById('histList'),
+          f = document.getElementById('f'),
+          prev = document.getElementById('img-prev');
 
-    function add(role, text) {
-        const d = document.createElement('div'); d.className = `msg ${role}`;
-        d.innerHTML = text.replace(/\n/g, '<br>'); box.appendChild(d);
-        box.scrollTop = box.scrollHeight;
+    // Add message to UI
+    function addMsg(role, text) {
+        const div = document.createElement('div');
+        div.className = `msg ${role}`;
+        div.innerText = text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function speak(t) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
+    // Handle Send
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if(!text) return;
+        addMsg('user', text);
+        userInput.value = '';
 
-    // --- CHAT LOGIC ---
-    async function doSend() {
-        const val = inp.value.trim(); if(!val) return;
-        add('user', val); inp.value = "";
         try {
-            const r = await fetch('/chat', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({message:val}) });
-            const d = await r.json();
-            const txt = d.reply || d.error || "System Error";
-            add('bot', txt); speak(txt);
-        } catch { add('bot', "Offline."); }
-    }
-    send.onclick = doSend;
-    inp.onkeypress = (e) => { if(e.key === "Enter") doSend(); };
-
-    // --- VOICE ---
-    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(Rec) {
-        const rec = new Rec();
-        mic.onclick = () => { rec.start(); mic.style.background = "red"; };
-        rec.onresult = (e) => { inp.value = e.results[0][0].transcript; doSend(); };
-        rec.onend = () => mic.style.background = "#f0f0f0";
+            const res = await fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: text})
+            });
+            const data = await res.json();
+            addMsg('bot', data.reply || data.error);
+        } catch { addMsg('bot', "Connection Error."); }
     }
 
-    // --- PHOTOS ---
+    document.getElementById('sendBtn').onclick = sendMessage;
+    userInput.onkeypress = (e) => { if(e.key === "Enter") sendMessage(); };
+
+    // Image Upload & Analysis
     f.onchange = async (e) => {
-        const file = e.target.files[0]; if(!file) return;
-        prev.src = URL.createObjectURL(file); prev.style.display = "block";
-        laser.style.display = "block"; add('user', "Analyzing image...");
-        const fd = new FormData(); fd.append('file', file);
+        const file = e.target.files[0];
+        if(!file) return;
+        prev.src = URL.createObjectURL(file);
+        prev.style.display = 'block';
+        addMsg('user', "Analyzing photo...");
+
+        const fd = new FormData();
+        fd.append('file', file);
         try {
-            const r = await fetch('/diagnose', { method:'POST', body: fd });
-            const d = await r.json(); laser.style.display = "none";
-            const res = d.analysis || d.error || "Failed.";
-            add('bot', res); speak("Diagnosis complete.");
-            save(res);
-        } catch { laser.style.display = "none"; add('bot', "Upload Error."); }
+            const r = await fetch('/diagnose', { method: 'POST', body: fd });
+            const d = await r.json();
+            const result = d.analysis || d.error;
+            addMsg('bot', result);
+            saveToHistory(result);
+        } catch { addMsg('bot', "Vision Error."); }
     };
 
-    // --- HISTORY ---
+    // --- SWIPE LOGIC ---
+    let startX = 0;
+    histPanel.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+    histPanel.addEventListener('touchend', e => {
+        if (e.changedTouches[0].clientX - startX > 80) toggleHist(); 
+    });
+
     function toggleHist() {
-        hp.classList.toggle('open');
-        if(hp.classList.contains('open')) {
-            const h = JSON.parse(localStorage.getItem('agH') || '[]');
-            hl.innerHTML = h.map(x => `<div class="hist-item"><strong>${x.d}</strong><br>${x.t}</div>`).join('') || "No scans yet.";
+        histPanel.classList.toggle('open');
+        if(histPanel.classList.contains('open')) {
+            const h = JSON.parse(localStorage.getItem('agHistory') || '[]');
+            histList.innerHTML = h.map(i => `<div class="hist-card"><small>${i.date}</small><br>${i.text}</div>`).join('') || "No history.";
         }
     }
-    function save(t) {
-        let h = JSON.parse(localStorage.getItem('agH') || '[]');
-        h.unshift({ d: new Date().toLocaleString(), t: t.substring(0, 60) + "..." });
-        localStorage.setItem('agH', JSON.stringify(h.slice(0, 10)));
+
+    function saveToHistory(text) {
+        let h = JSON.parse(localStorage.getItem('agHistory') || '[]');
+        h.unshift({ date: new Date().toLocaleTimeString(), text: text.substring(0, 50) + "..." });
+        localStorage.setItem('agHistory', JSON.stringify(h.slice(0,10)));
     }
 </script>
 </body>
