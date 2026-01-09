@@ -45,7 +45,7 @@ async def diagnose(file: UploadFile = File(...)):
                         "5. PREVENTION: One tip to stop this from returning next season.\n"
                         "Use a professional, urgent, yet encouraging tone. Be precise—don't say 'it might be,' say 'the symptoms suggest...'"
                     )
-                }, # Added missing comma here
+                },
                 {
                     "role": "user", 
                     "content": [
@@ -53,18 +53,17 @@ async def diagnose(file: UploadFile = File(...)):
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                     ]
                 }
-            ] # Added missing closing bracket here
+            ]
         )
         return {"analysis": completion.choices[0].message.content}
     except Exception as e:
         print(f"Vision Error: {str(e)}")
-        return {"error": "AI Vision model is currently unavailable. Please try again in a few minutes."}
+        return {"error": "AI Vision model is currently unavailable."}
 
 @app.post("/chat")
 async def chat_text(data: dict):
     try:
         user_text = data.get("message")
-        # STABLE TEXT MODEL
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
