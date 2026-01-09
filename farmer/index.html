@@ -8,47 +8,35 @@
         :root { --ag-green: #2e7d32; --ag-light: #e8f5e9; --ag-border: #d1d9d1; }
         body { margin: 0; font-family: sans-serif; background: #f0f4f0; display: flex; justify-content: center; height: 100vh; }
         .app-container { width: 100%; max-width: 480px; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        
         header { padding: 15px; border-bottom: 1px solid var(--ag-border); display: flex; justify-content: space-between; align-items: center; }
         .logo { color: var(--ag-green); font-weight: bold; font-size: 20px; }
-
         .scan-area { padding: 20px; background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid var(--ag-border); }
-        .circle { width: 160px; height: 160px; border-radius: 50%; border: 4px solid white; overflow: hidden; position: relative; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .circle { width: 150px; height: 150px; border-radius: 50%; border: 4px solid white; overflow: hidden; position: relative; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         #preview { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .line { position: absolute; width: 100%; height: 3px; background: var(--ag-green); top: 0; display: none; }
+        .line { position: absolute; width: 100%; height: 3px; background: var(--ag-green); top: 0; display: none; z-index: 10; }
         @keyframes scan { from { top: 0; } to { top: 100%; } }
-
         .chat { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
         .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
         .msg.bot { background: #f1f8f1; align-self: flex-start; border-left: 4px solid var(--ag-green); }
         .msg.user { background: #e9ecef; align-self: flex-end; }
-
         .input-bar { padding: 15px; border-top: 1px solid var(--ag-border); display: flex; gap: 10px; align-items: center; }
-        input { flex-grow: 1; padding: 10px 15px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
-        .btn-send { background: var(--ag-green); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+        input { flex-grow: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
+        .btn-circle { background: var(--ag-green); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
-
 <div class="app-container">
     <header><div class="logo">AgroGuru AI</div></header>
-
     <div class="scan-area">
-        <div class="circle">
-            <div class="line" id="line"></div>
-            <img id="preview">
-        </div>
+        <div class="circle"><div class="line" id="line"></div><img id="preview"></div>
         <button onclick="document.getElementById('file').click()" style="margin-top:10px; background:var(--ag-green); color:white; border:none; padding:8px 15px; border-radius:5px;">Snap Photo</button>
         <input type="file" id="file" accept="image/*" capture="environment" hidden>
     </div>
-
-    <div class="chat" id="chat-box">
-        <div class="msg bot">Welcome! Send a photo of a leaf or ask a question.</div>
-    </div>
-
+    <div class="chat" id="chat-box"><div class="msg bot">Hello! I can see and hear you. Snap a leaf or talk to me.</div></div>
     <div class="input-bar">
-        <input type="text" id="user-input" placeholder="Ask about your crops...">
-        <button class="btn-send" id="send-btn">➔</button>
+        <button class="btn-circle" id="mic-btn" style="background:#eee; color:black;">🎤</button>
+        <input type="text" id="user-input" placeholder="Type or hit Enter...">
+        <button class="btn-send btn-circle" id="send-btn">➔</button>
     </div>
 </div>
 
@@ -56,6 +44,7 @@
     const chatBox = document.getElementById('chat-box');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
+    const micBtn = document.getElementById('mic-btn');
     const fileInput = document.getElementById('file');
     const preview = document.getElementById('preview');
     const line = document.getElementById('line');
@@ -68,47 +57,57 @@
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // --- HANDLE TEXT MESSAGES ---
-    sendBtn.onclick = async () => {
+    function speak(text) {
+        const ut = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(ut);
+    }
+
+    // --- TEXT & ENTER KEY ---
+    async function handleSend() {
         const text = userInput.value.trim();
         if(!text) return;
         addMsg('user', text);
         userInput.value = "";
-
         try {
-            const res = await fetch('/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
-            });
+            const res = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }) });
             const data = await res.json();
-            addMsg('bot', data.reply || "Error thinking...");
-        } catch { addMsg('bot', "Server offline."); }
-    };
+            const reply = data.reply || "Thinking error.";
+            addMsg('bot', reply);
+            speak(reply);
+        } catch { addMsg('bot', "Server error."); }
+    }
 
-    // --- HANDLE PHOTOS ---
+    sendBtn.onclick = handleSend;
+    userInput.addEventListener("keypress", (e) => { if(e.key === "Enter") handleSend(); });
+
+    // --- VOICE MIC ---
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        micBtn.onclick = () => { recognition.start(); micBtn.style.background = "red"; };
+        recognition.onresult = (e) => { userInput.value = e.results[0][0].transcript; handleSend(); };
+        recognition.onend = () => { micBtn.style.background = "#eee"; };
+    }
+
+    // --- PHOTOS ---
     fileInput.onchange = async (e) => {
         const file = e.target.files[0];
         if(!file) return;
-
         preview.src = URL.createObjectURL(file);
         preview.style.display = "block";
         line.style.display = "block";
         line.style.animation = "scan 2s infinite linear";
-        addMsg('user', "Analyzing image...");
-
+        addMsg('user', "Scanning leaf...");
         const formData = new FormData();
         formData.append('file', file);
-
         try {
             const res = await fetch('/diagnose', { method: 'POST', body: formData });
             const data = await res.json();
             line.style.display = "none";
-            addMsg('bot', data.analysis || "Could not diagnose.");
-        } catch { 
-            line.style.display = "none";
-            addMsg('bot', "Upload failed."); 
-        }
+            const result = data.analysis || "Can't see clearly.";
+            addMsg('bot', result);
+            speak("Diagnosis finished.");
+        } catch { line.style.display = "none"; addMsg('bot', "Upload failed."); }
     };
 </script>
 </body>
