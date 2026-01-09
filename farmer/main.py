@@ -46,8 +46,7 @@ async def diagnose(file: UploadFile = File(...)):
                     {"type": "text", "text": "Analyze this crop leaf for diseases."},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                 ]}
-            ]
-        )
+
         return {"analysis": completion.choices[0].message.content}
     except Exception as e:
         print(f"Vision Error: {str(e)}")
@@ -82,4 +81,5 @@ async def chat_text(data: dict):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
