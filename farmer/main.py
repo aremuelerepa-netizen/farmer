@@ -31,7 +31,7 @@ async def diagnose(file: UploadFile = File(...)):
         
         # Latest Vision Model
         completion = client.chat.completions.create(
-            model="llama-3.2-11b-vision-preview",
+            model="llama-3.2-90b-vision-preview",
             messages=[
                 {"role": "system", "content": "You are a pro agronomist. Diagnose the plant and disease in 3 steps."},
                 {"role": "user", "content": [
@@ -65,3 +65,4 @@ async def chat_text(data: dict):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
