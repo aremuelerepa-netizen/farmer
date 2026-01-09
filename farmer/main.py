@@ -8,7 +8,6 @@ from groq import Groq
 
 app = FastAPI()
 
-# Enable CORS for mobile/web access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,19 +15,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Groq Client
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-# --- AGROGURU CONFIGURATION ---
+# --- THE AGROGURU PERSONALITY ---
+# We force the AI to be warm and remember it is a mentor, not a robot.
 SYSTEM_PROMPT = (
-    "You are AgroGuru, a warm, seasoned farming mentor. "
-    "Be encouraging and use simple language. "
-    "Always use bullet points for steps. Max 80 words. "
-    "CRITICAL: Always end your response with a 'Guru Tip'—a small expert secret or traditional wisdom."
+    "You are AgroGuru, a warm, wise, and very friendly farming mentor. "
+    "Your tone is like a helpful neighbor sharing coffee. Use phrases like 'Bless your heart,' 'Let's see here,' or 'Don't you worry.' "
+    "Rules: "
+    "1. Be encouraging. 2. Use simple bullet points. 3. Max 80 words. "
+    "4. If a scan was done recently, ALWAYS refer back to that specific plant. "
+    "5. End with a 'Guru Tip' (traditional farming wisdom)."
 )
 
-# This list holds the conversation. 
-# It starts with the System Prompt so the AI knows its personality.
+# Global memory (Note: This clears if the server restarts on Render)
 chat_memory = [{"role": "system", "content": SYSTEM_PROMPT}]
 
 @app.get("/")
@@ -41,25 +41,23 @@ async def chat_text(data: dict):
     try:
         user_text = data.get("message")
         
-        # 1. Add user message to memory
+        # Add user message to history
         chat_memory.append({"role": "user", "content": user_text})
         
-        # 2. Send the entire memory (including system prompt and previous scans)
-        # We send the last 15 messages to ensure it doesn't forget the crop
+        # We send the System Prompt + the whole history to ensure it stays 'Friendly'
+        # and remembers the previous scan result.
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=chat_memory[-15:] 
+            messages=chat_memory,
+            temperature=0.8, # Higher temperature makes it more 'friendly' and less robotic
         )
         
         reply = completion.choices[0].message.content
-        
-        # 3. Add AI reply to memory
         chat_memory.append({"role": "assistant", "content": reply})
         
         return {"reply": reply}
     except Exception as e:
-        print(f"Chat Error: {e}")
-        return {"error": "AgroGuru is resting. Try again in a moment."}
+        return {"error": "AgroGuru is taking a quick break. Try again!"}
 
 @app.post("/diagnose")
 async def diagnose(file: UploadFile = File(...)):
@@ -67,15 +65,15 @@ async def diagnose(file: UploadFile = File(...)):
         content = await file.read()
         base64_image = base64.b64encode(content).decode('utf-8')
         
-        # 1. Vision Analysis
+        # Vision Analysis
         completion = client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct", 
             messages=[
-                {"role": "system", "content": "You are a crop pathologist. Identify the plant and disease. Give short action steps. Max 100 words."},
+                {"role": "system", "content": "You are a friendly crop doctor. Identify the plant and disease. Be warm. Max 90 words."},
                 {
                     "role": "user", 
                     "content": [
-                        {"type": "text", "text": "What is wrong with this plant?"},
+                        {"type": "text", "text": "Take a look at this plant for me, Guru."},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
                     ]
                 }
@@ -83,26 +81,25 @@ async def diagnose(file: UploadFile = File(...)):
         )
         analysis_result = completion.choices[0].message.content
 
-        # 2. KEY STEP: Inject the diagnosis into Chat Memory
-        # We tell the 'Chat brain' exactly what the 'Vision brain' saw.
+        # THE RE-INFORCEMENT: We add this as a System note so the AI CANNOT forget it.
         chat_memory.append({
-            "role": "assistant", 
-            "content": f"SCAN REPORT: The user uploaded a photo. I identified it as: {analysis_result}. I will remember this for future questions."
+            "role": "system", 
+            "content": f"USER CONTEXT: The user just scanned a plant. You identified it as: {analysis_result}. You must remember this plant for all future questions until the chat is reset."
         })
+        
+        # Also add a friendly confirmation message from the Guru
+        chat_memory.append({"role": "assistant", "content": analysis_result})
         
         return {"analysis": analysis_result}
     except Exception as e:
-        print(f"Vision Error: {e}")
-        return {"error": "Could not see the photo clearly. Try a smaller file."}
+        return {"error": "Couldn't see that clearly. Try a smaller photo, friend."}
 
 @app.post("/reset")
 async def reset_chat():
     global chat_memory
-    # Clear memory but put the System Prompt back in
     chat_memory = [{"role": "system", "content": SYSTEM_PROMPT}]
     return {"status": "Memory cleared"}
 
 if __name__ == "__main__":
-    # Get port from environment (required for Render/Heroku)
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
