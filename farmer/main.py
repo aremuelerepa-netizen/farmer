@@ -8,7 +8,6 @@ import uvicorn
 
 app = FastAPI()
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,43 +15,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize Groq (Set GROQ_API_KEY in Render Environment)
+# Initialize Groq
 api_key = os.environ.get("GROQ_API_KEY")
 client = Groq(api_key=api_key)
 
-# 1. SERVE INTERFACE
 @app.get("/")
 async def serve_interface():
     index_path = os.path.join(os.path.dirname(__file__), "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"error": "index.html not found"}
+    return FileResponse(index_path) if os.path.exists(index_path) else {"error": "index.html not found"}
 
-# 2. IMAGE ANALYSIS (Vision)
 @app.post("/diagnose")
 async def diagnose(file: UploadFile = File(...)):
     try:
         content = await file.read()
         base64_image = base64.b64encode(content).decode('utf-8')
-        
         completion = client.chat.completions.create(
             model="llama-3.2-11b-vision-preview",
             messages=[
-                {"role": "system", "content": "You are a pro agronomist. Identify the plant and disease. Give a 3-step recovery plan."},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Analyze this leaf."},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
-                    ]
-                }
+                {"role": "system", "content": "You are a pro agronomist. Diagnose this plant."},
+                {"role": "user", "content": [{"type": "text", "text": "Analyze this leaf."}, {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}]}
             ]
         )
         return {"analysis": completion.choices[0].message.content}
     except Exception as e:
         return {"error": str(e)}
 
-# 3. TEXT CHAT (Reply to messages)
 @app.post("/chat")
 async def chat_text(data: dict):
     try:
@@ -60,7 +47,7 @@ async def chat_text(data: dict):
         completion = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=[
-                {"role": "system", "content": "You are a helpful AI Agronomist. Answer farming questions briefly and professionally."},
+                {"role": "system", "content": "You are a helpful AI Agronomist."},
                 {"role": "user", "content": user_text}
             ]
         )
