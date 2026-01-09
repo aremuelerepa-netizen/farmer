@@ -3,112 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgroGuru AI</title>
+    <title>AgroGuru Pro</title>
     <style>
-        :root { --ag-green: #2e7d32; --ag-light: #e8f5e9; --ag-border: #d1d9d1; }
-        body { margin: 0; font-family: sans-serif; background: #f0f4f0; display: flex; justify-content: center; height: 100vh; }
-        .app-container { width: 100%; max-width: 480px; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        header { padding: 15px; border-bottom: 1px solid var(--ag-border); display: flex; justify-content: space-between; align-items: center; }
+        :root { --ag-green: #2e7d32; --ag-bg: #f0f4f0; }
+        body { margin: 0; font-family: sans-serif; background: var(--ag-bg); display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+        .app { width: 100%; max-width: 480px; background: white; display: flex; flex-direction: column; position: relative; }
+        header { padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; }
         .logo { color: var(--ag-green); font-weight: bold; font-size: 20px; }
-        .scan-area { padding: 20px; background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid var(--ag-border); }
-        .circle { width: 150px; height: 150px; border-radius: 50%; border: 4px solid white; overflow: hidden; position: relative; background: #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #preview { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .line { position: absolute; width: 100%; height: 3px; background: var(--ag-green); top: 0; display: none; z-index: 10; }
+        
+        /* Scanner UI */
+        .scanner { padding: 20px; background: #e8f5e9; display: flex; flex-direction: column; align-items: center; border-bottom: 1px solid #ddd; }
+        .viewfinder { width: 140px; height: 140px; border-radius: 50%; border: 4px solid white; overflow: hidden; position: relative; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        #img-prev { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .laser { position: absolute; width: 100%; height: 3px; background: var(--ag-green); top: 0; display: none; animation: scan 2s infinite linear; }
         @keyframes scan { from { top: 0; } to { top: 100%; } }
-        .chat { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
+
+        /* Chat UI */
+        .chat-box { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 85%; padding: 10px 15px; border-radius: 15px; font-size: 14px; line-height: 1.4; }
         .msg.bot { background: #f1f8f1; align-self: flex-start; border-left: 4px solid var(--ag-green); }
         .msg.user { background: #e9ecef; align-self: flex-end; }
-        .input-bar { padding: 15px; border-top: 1px solid var(--ag-border); display: flex; gap: 10px; align-items: center; }
-        input { flex-grow: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
-        .btn-circle { background: var(--ag-green); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* Input Bar */
+        .controls { padding: 15px; border-top: 1px solid #ddd; display: flex; gap: 10px; }
+        input { flex-grow: 1; padding: 12px; border-radius: 25px; border: 1px solid #ddd; outline: none; }
+        .btn { background: var(--ag-green); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; }
+
+        /* History Panel */
+        .history { position: absolute; right: -100%; top: 0; width: 85%; height: 100%; background: white; z-index: 100; transition: 0.3s; padding: 20px; box-sizing: border-box; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
+        .history.open { right: 0; }
+        .hist-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; }
     </style>
 </head>
 <body>
-<div class="app-container">
-    <header><div class="logo">AgroGuru AI</div></header>
-    <div class="scan-area">
-        <div class="circle"><div class="line" id="line"></div><img id="preview"></div>
-        <button onclick="document.getElementById('file').click()" style="margin-top:10px; background:var(--ag-green); color:white; border:none; padding:8px 15px; border-radius:5px;">Snap Photo</button>
-        <input type="file" id="file" accept="image/*" capture="environment" hidden>
+<div class="app">
+    <header>
+        <div class="logo">AgroGuru AI</div>
+        <button onclick="toggleHist()" style="background:none; border:none; color:var(--ag-green); font-weight:bold; cursor:pointer;">📜 History</button>
+    </header>
+
+    <div class="scanner">
+        <div class="viewfinder"><div class="laser" id="laser"></div><img id="img-prev"></div>
+        <button onclick="document.getElementById('f').click()" style="margin-top:10px; border-radius:20px; padding:8px 20px; border:none; background:var(--ag-green); color:white; cursor:pointer;">📷 Take Photo</button>
+        <input type="file" id="f" accept="image/*" capture="environment" hidden>
     </div>
-    <div class="chat" id="chat-box"><div class="msg bot">Hello! I can see and hear you. Snap a leaf or talk to me.</div></div>
-    <div class="input-bar">
-        <button class="btn-circle" id="mic-btn" style="background:#eee; color:black;">🎤</button>
-        <input type="text" id="user-input" placeholder="Type or hit Enter...">
-        <button class="btn-send btn-circle" id="send-btn">➔</button>
+
+    <div class="chat-box" id="box">
+        <div class="msg bot">I'm ready. Snap a leaf or ask me anything!</div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" id="mic" style="background:#f0f0f0; color:#333;">🎤</button>
+        <input type="text" id="in" placeholder="Ask AgroGuru...">
+        <button class="btn" id="send">➔</button>
+    </div>
+
+    <div class="history" id="hp">
+        <div style="display:flex; justify-content:space-between;"><h3>Recent Scans</h3><button onclick="toggleHist()" style="border:none; background:none; font-size:20px;">✕</button></div>
+        <div id="hl"></div>
     </div>
 </div>
 
 <script>
-    const chatBox = document.getElementById('chat-box');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    const micBtn = document.getElementById('mic-btn');
-    const fileInput = document.getElementById('file');
-    const preview = document.getElementById('preview');
-    const line = document.getElementById('line');
+    const box = document.getElementById('box'), inp = document.getElementById('in'), send = document.getElementById('send'), 
+          mic = document.getElementById('mic'), f = document.getElementById('f'), prev = document.getElementById('img-prev'), 
+          laser = document.getElementById('laser'), hp = document.getElementById('hp'), hl = document.getElementById('hl');
 
-    function addMsg(role, text) {
-        const div = document.createElement('div');
-        div.className = `msg ${role}`;
-        div.innerHTML = text.replace(/\n/g, '<br>');
-        chatBox.appendChild(div);
-        chatBox.scrollTop = chatBox.scrollHeight;
+    function add(role, text) {
+        const d = document.createElement('div'); d.className = `msg ${role}`;
+        d.innerHTML = text.replace(/\n/g, '<br>'); box.appendChild(d);
+        box.scrollTop = box.scrollHeight;
     }
 
-    function speak(text) {
-        const ut = new SpeechSynthesisUtterance(text);
-        window.speechSynthesis.speak(ut);
-    }
+    function speak(t) { window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
 
-    // --- TEXT & ENTER KEY ---
-    async function handleSend() {
-        const text = userInput.value.trim();
-        if(!text) return;
-        addMsg('user', text);
-        userInput.value = "";
+    // --- CHAT LOGIC ---
+    async function doSend() {
+        const val = inp.value.trim(); if(!val) return;
+        add('user', val); inp.value = "";
         try {
-            const res = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }) });
-            const data = await res.json();
-            const reply = data.reply || "Thinking error.";
-            addMsg('bot', reply);
-            speak(reply);
-        } catch { addMsg('bot', "Server error."); }
+            const r = await fetch('/chat', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({message:val}) });
+            const d = await r.json();
+            const txt = d.reply || d.error || "System Error";
+            add('bot', txt); speak(txt);
+        } catch { add('bot', "Offline."); }
     }
+    send.onclick = doSend;
+    inp.onkeypress = (e) => { if(e.key === "Enter") doSend(); };
 
-    sendBtn.onclick = handleSend;
-    userInput.addEventListener("keypress", (e) => { if(e.key === "Enter") handleSend(); });
-
-    // --- VOICE MIC ---
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        micBtn.onclick = () => { recognition.start(); micBtn.style.background = "red"; };
-        recognition.onresult = (e) => { userInput.value = e.results[0][0].transcript; handleSend(); };
-        recognition.onend = () => { micBtn.style.background = "#eee"; };
+    // --- VOICE ---
+    const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(Rec) {
+        const rec = new Rec();
+        mic.onclick = () => { rec.start(); mic.style.background = "red"; };
+        rec.onresult = (e) => { inp.value = e.results[0][0].transcript; doSend(); };
+        rec.onend = () => mic.style.background = "#f0f0f0";
     }
 
     // --- PHOTOS ---
-    fileInput.onchange = async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = "block";
-        line.style.display = "block";
-        line.style.animation = "scan 2s infinite linear";
-        addMsg('user', "Scanning leaf...");
-        const formData = new FormData();
-        formData.append('file', file);
+    f.onchange = async (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        prev.src = URL.createObjectURL(file); prev.style.display = "block";
+        laser.style.display = "block"; add('user', "Analyzing image...");
+        const fd = new FormData(); fd.append('file', file);
         try {
-            const res = await fetch('/diagnose', { method: 'POST', body: formData });
-            const data = await res.json();
-            line.style.display = "none";
-            const result = data.analysis || "Can't see clearly.";
-            addMsg('bot', result);
-            speak("Diagnosis finished.");
-        } catch { line.style.display = "none"; addMsg('bot', "Upload failed."); }
+            const r = await fetch('/diagnose', { method:'POST', body: fd });
+            const d = await r.json(); laser.style.display = "none";
+            const res = d.analysis || d.error || "Failed.";
+            add('bot', res); speak("Diagnosis complete.");
+            save(res);
+        } catch { laser.style.display = "none"; add('bot', "Upload Error."); }
     };
+
+    // --- HISTORY ---
+    function toggleHist() {
+        hp.classList.toggle('open');
+        if(hp.classList.contains('open')) {
+            const h = JSON.parse(localStorage.getItem('agH') || '[]');
+            hl.innerHTML = h.map(x => `<div class="hist-item"><strong>${x.d}</strong><br>${x.t}</div>`).join('') || "No scans yet.";
+        }
+    }
+    function save(t) {
+        let h = JSON.parse(localStorage.getItem('agH') || '[]');
+        h.unshift({ d: new Date().toLocaleString(), t: t.substring(0, 60) + "..." });
+        localStorage.setItem('agH', JSON.stringify(h.slice(0, 10)));
+    }
 </script>
 </body>
 </html>
