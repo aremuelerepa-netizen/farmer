@@ -35,16 +35,8 @@ async def diagnose(file: UploadFile = File(...)):
             messages=[
                 {
                     "role": "system", 
-                    "content": (
-                        "You are the AgroGuru Pro, a senior plant pathologist and agronomist. "
-                        "When you see a plant image:\n"
-                        "1. IDENTIFY: State the exact crop variety and the likely disease/pest.\n"
-                        "2. SEVERITY: Rate the infection from Level 1 (Minor) to Level 5 (Critical).\n"
-                        "3. CAUSE: Briefly explain why this happened (e.g., high humidity, soil deficiency).\n"
-                        "4. ACTION PLAN: Provide 3 immediate organic steps and 1 chemical backup if necessary.\n"
-                        "5. PREVENTION: One tip to stop this from returning next season.\n"
-                        "Use a professional, urgent, yet encouraging tone. Be precise—don't say 'it might be,' say 'the symptoms suggest...'"
-                    )
+                   "content": "You are AgroGuru Pro. Be extremely concise. 1. Identify Crop/Disease. 2. Severity (1-5). 3. Immediate Action (bullet points). 4. One Prevention tip. Max 100 words."
+                    
                 },
                 {
                     "role": "user", 
@@ -69,16 +61,7 @@ async def chat_text(data: dict):
             messages=[
                 {
                     "role": "system", 
-                    "content": (
-                        "You are AgroGuru Pro, a world-class farming consultant. "
-                        "You specialize in high-yield, sustainable farming. "
-                        "When a user asks a question:\n"
-                        "- Give advice specific to the current season (January 2026).\n"
-                        "- If they ask about planting, mention soil pH and spacing.\n"
-                        "- If they ask about profit, mention market trends.\n"
-                        "- Always include a 'Guru Tip'—a small, expert secret that most farmers miss.\n"
-                        "- Keep responses concise and use bullet points for readability."
-                    )
+                    "content": "You are AgroGuru Pro. Give expert, short, and punchy farming advice. Use bullets. No long introductions. Max 80 words."
                 },
                 {"role": "user", "content": user_text}
             ]
@@ -91,3 +74,4 @@ async def chat_text(data: dict):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
