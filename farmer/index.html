@@ -6,39 +6,59 @@
     <title>AgroGuru Pro</title>
     <style>
         :root { --ag-green: #2e7d32; --ag-bg: #ffffff; --msg-bot: #f1f3f4; --msg-user: #2e7d32; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; position: fixed; background: var(--ag-bg); font-family: -apple-system, Roboto, sans-serif; overscroll-behavior-y: none; }
-        .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100%; max-width: 500px; margin: 0 auto; }
         
-        header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: #fff; z-index: 100; flex-shrink: 0; }
-        .logo { font-weight: 700; color: var(--ag-green); font-size: 1.1rem; }
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; position: fixed; background: var(--ag-bg); 
+            font-family: -apple-system, Roboto, sans-serif; 
+        }
 
-        #chat-flow { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; -webkit-overflow-scrolling: touch; }
-        
-        .bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 16px; line-height: 1.4; word-wrap: break-word; }
-        .bubble.bot { background: var(--msg-bot); align-self: flex-start; border-bottom-left-radius: 4px; color: #202124; }
+        .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100%; max-width: 480px; margin: 0 auto; }
+
+        header { 
+            padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid #eee; background: #fff; flex-shrink: 0;
+        }
+        .logo { font-weight: 700; color: var(--ag-green); font-size: 0.95rem; }
+
+        #chat-flow { 
+            flex-grow: 1; overflow-y: auto; padding: 10px; 
+            display: flex; flex-direction: column; gap: 8px; 
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        .bubble { 
+            max-width: 82%; padding: 8px 12px; border-radius: 15px; 
+            font-size: 14px; line-height: 1.4; word-wrap: break-word; 
+        }
+        .bubble.bot { background: var(--msg-bot); align-self: flex-start; border-bottom-left-radius: 4px; }
         .bubble.user { background: var(--msg-user); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
 
-        /* IMAGE SCANNING VISUALS */
-        .img-wrapper { position: relative; width: 100%; border-radius: 12px; overflow: hidden; margin-top: 5px; border: 2px solid white; }
+        /* Scanning Visuals */
+        .img-wrapper { position: relative; width: 140px; border-radius: 10px; overflow: hidden; margin-top: 5px; border: 2px solid #ddd; }
         .img-wrapper img { width: 100%; display: block; }
-        .scanner-line { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 4px; 
-            background: #00ff00; box-shadow: 0 0 15px #00ff00;
-            animation: scanMove 2s infinite ease-in-out;
-            display: none;
+        .laser { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 3px; 
+            background: #00ff00; box-shadow: 0 0 10px #00ff00;
+            animation: scan 2s infinite linear; display: none;
         }
-        @keyframes scanMove { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
 
-        .input-area { padding: 12px 15px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); background: #fff; display: flex; align-items: center; gap: 10px; border-top: 1px solid #eee; flex-shrink: 0; }
-        .input-pill { flex-grow: 1; background: #f1f3f4; border-radius: 25px; padding: 0 15px; display: flex; align-items: center; }
-        input { flex-grow: 1; border: none; background: transparent; padding: 12px 0; font-size: 16px; outline: none; color: #333; }
-        .action-btn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-camera { color: var(--ag-green); background: #e8f5e9; }
+        .input-area { 
+            padding: 8px 12px; padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            background: #fff; display: flex; align-items: center; gap: 8px; 
+            border-top: 1px solid #eee; flex-shrink: 0;
+        }
+        .input-pill { flex-grow: 1; background: #f1f3f4; border-radius: 20px; padding: 0 12px; display: flex; align-items: center; }
+        input { flex-grow: 1; border: none; background: transparent; padding: 8px 0; font-size: 15px; outline: none; }
+        
+        .btn { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-cam { color: var(--ag-green); background: #e8f5e9; }
         .btn-send { background: var(--ag-green); color: white; }
 
-        #history-panel { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: white; z-index: 1000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        #history-panel.active { right: 0; }
-        .hist-item { padding: 15px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+        #hist-panel { position: fixed; top: 0; right: -100%; width: 100%; height: 100%; background: white; z-index: 1000; transition: 0.3s; }
+        #hist-panel.active { right: 0; }
+        .hist-item { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -46,111 +66,89 @@
 <div class="app-shell">
     <header>
         <span class="logo">AgroGuru Pro</span>
-        <button onclick="openHist()" style="background:none; border:none; font-size:1.5rem;">📜</button>
+        <button onclick="toggleH(true)" style="background:none; border:none; font-size:1.2rem;">📜</button>
     </header>
 
     <div id="chat-flow">
-        <div class="bubble bot">Ready. Upload a photo to begin scanning.</div>
+        <div class="bubble bot">Welcome! Send a photo or ask a question.</div>
     </div>
 
     <div class="input-area">
-        <button class="action-btn btn-camera" onclick="document.getElementById('file-in').click()">📷</button>
-        <div class="input-pill">
-            <input type="text" id="user-in" placeholder="Ask AgroGuru...">
-        </div>
-        <button class="action-btn btn-send" id="send-btn">➔</button>
+        <button class="btn btn-cam" onclick="document.getElementById('f').click()">📷</button>
+        <div class="input-pill"><input type="text" id="i" placeholder="Ask anything..."></div>
+        <button class="btn btn-send" onclick="sendT()">➔</button>
     </div>
-    <input type="file" id="file-in" accept="image/*" capture="environment" style="display:none">
+    <input type="file" id="f" accept="image/*" capture="environment" style="display:none">
 </div>
 
-<div id="history-panel">
-    <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="margin:0">Scan History</h3>
-        <button onclick="closeHist()" style="border:none; background:none; font-size:1.5rem;">✕</button>
+<div id="hist-panel">
+    <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+        <strong>History</strong>
+        <button onclick="toggleH(false)" style="border:none; background:none;">✕</button>
     </div>
-    <div id="hist-content" style="overflow-y:auto; height:calc(100% - 80px);"></div>
+    <div id="h-list"></div>
 </div>
 
 <script>
-    const chatFlow = document.getElementById('chat-flow');
-    const userIn = document.getElementById('user-in');
-    const histPanel = document.getElementById('history-panel');
+    const chat = document.getElementById('chat-flow'), 
+          inp = document.getElementById('i'), 
+          file = document.getElementById('f'),
+          hPanel = document.getElementById('hist-panel');
 
-    function addBubble(role, content, isHtml = false) {
-        const div = document.createElement('div');
-        div.className = `bubble ${role}`;
-        if(isHtml) div.innerHTML = content;
-        else div.innerText = content;
-        chatFlow.appendChild(div);
-        chatFlow.scrollTop = chatFlow.scrollHeight;
-        return div;
+    function addB(role, content, isHtml = false) {
+        const d = document.createElement('div');
+        d.className = `bubble ${role}`;
+        if(isHtml) d.innerHTML = content; else d.innerText = content;
+        chat.appendChild(d);
+        chat.scrollTop = chat.scrollHeight;
+        return d;
     }
 
-    async function handleChat() {
-        const msg = userIn.value.trim();
-        if(!msg) return;
-        addBubble('user', msg);
-        userIn.value = '';
-        try {
-            const res = await fetch('/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: msg}) });
-            const data = await res.json();
-            addBubble('bot', data.reply);
-        } catch { addBubble('bot', "Connection failed."); }
+    async function sendT() {
+        const txt = inp.value.trim();
+        if(!txt) return;
+        addB('user', txt); inp.value = '';
+        const r = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message:txt})});
+        const d = await r.json();
+        addB('bot', d.reply);
     }
 
-    document.getElementById('send-btn').onclick = handleChat;
-    userIn.onkeypress = (e) => { if(e.key === 'Enter') handleChat(); };
-
-    document.getElementById('file-in').onchange = async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-
-        // Show image in chat immediately
-        const imgUrl = URL.createObjectURL(file);
-        const imgHtml = `
-            <div class="img-wrapper">
-                <div class="scanner-line" id="last-scanner" style="display:block"></div>
-                <img src="${imgUrl}">
-            </div>
-            <div style="font-size:0.8rem; margin-top:5px; opacity:0.8">Scanning crop tissue...</div>
-        `;
-        addBubble('user', imgHtml, true);
-
-        const fd = new FormData();
-        fd.append('file', file);
-        try {
-            const res = await fetch('/diagnose', { method: 'POST', body: fd });
-            const data = await res.json();
-            document.getElementById('last-scanner').id = "done"; // Stop scanning animation
-            addBubble('bot', data.analysis);
-            saveHist(data.analysis);
-        } catch { addBubble('bot', "Vision error."); }
+    file.onchange = async () => {
+        const f = file.files[0]; if(!f) return;
+        const url = URL.createObjectURL(f);
+        const html = `<div class="img-wrapper"><div class="laser" id="ls" style="display:block"></div><img src="${url}"></div><br><small>Scanning...</small>`;
+        addB('user', html, true);
+        const fd = new FormData(); fd.append('file', f);
+        const r = await fetch('/diagnose', {method:'POST', body:fd});
+        const d = await r.json();
+        document.getElementById('ls').style.display = 'none';
+        addB('bot', d.analysis);
+        saveH(d.analysis);
     };
 
-    function saveHist(t) {
-        let h = JSON.parse(localStorage.getItem('agH') || '[]');
-        h.unshift({ d: new Date().toLocaleString(), t: t });
-        localStorage.setItem('agH', JSON.stringify(h.slice(0, 15)));
+    function saveH(t) {
+        let h = JSON.parse(localStorage.getItem('ag') || '[]');
+        h.unshift({d: new Date().toLocaleTimeString(), t: t});
+        localStorage.setItem('ag', JSON.stringify(h.slice(0,10)));
     }
 
-    function openHist() { 
-        histPanel.classList.add('active'); 
-        const h = JSON.parse(localStorage.getItem('agH') || '[]');
-        document.getElementById('hist-content').innerHTML = h.map((i, index) => `
-            <div class="hist-item" onclick="restoreResult(${index})">
-                <small style="color:var(--ag-green)">${i.d}</small><br>
-                <strong>${i.t.substring(0, 60)}...</strong>
-            </div>
-        `).join('') || "<p style='padding:20px'>No history.</p>";
+    function toggleH(on) {
+        hPanel.classList.toggle('active', on);
+        if(on) {
+            const h = JSON.parse(localStorage.getItem('ag') || '[]');
+            document.getElementById('h-list').innerHTML = h.map((x,i) => `
+                <div class="hist-item" onclick="viewH(${i})">${x.d}: ${x.t.substring(0,40)}...</div>
+            `).join('') || "<p style='padding:15px'>No history.</p>";
+        }
     }
 
-    function restoreResult(idx) {
-        const h = JSON.parse(localStorage.getItem('agH') || '[]');
-        addBubble('bot', "Restored Report:\n" + h[idx].t);
-        closeHist();
+    function viewH(i) {
+        const h = JSON.parse(localStorage.getItem('ag') || '[]');
+        addB('bot', "Saved Report: " + h[i].t);
+        toggleH(false);
     }
 
-    function closeHist() { histPanel.classList.remove('active'); }
+    inp.onkeypress = (e) => { if(e.key==='Enter') sendT(); };
 </script>
 </body>
 </html>
